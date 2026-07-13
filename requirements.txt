@@ -5,8 +5,6 @@ python-dotenv>=1.0
 # Delta Chat integration (Stage 7+)
 deltachat-rpc-client>=1.150
 deltachat-rpc-server>=2.50
-pytest>=7
-pytest-xdist
 
 # QR code generation for /invite command
 qrcode[pil]

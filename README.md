@@ -91,10 +91,21 @@
 curl -sSL https://raw.githubusercontent.com/Alex-zWitCh/dc-atlas/main/setup.sh | sudo bash
 ```
 
-The script will ask only **3 questions**:
-1. **Chatmail server domain** (default: `delta.disobey.net`) — bot account is created automatically via API
-2. **Admin email addresses** (comma-separated)
-3. **HTTP-proxy** for Telegram (optional)
+The script will ask:
+
+1. **Chatmail server domain** (default: `nine.testrun.org`) — bot account is created automatically via `/new`
+2. **Administrator Delta Chat invite links** — paste one or more invite links from Delta Chat
+3. **HTTP proxy for Telegram** (optional)
+4. **Support contact link or email** (optional)
+
+The installer extracts admin email addresses from the Delta Chat invite links automatically.
+
+You can add items in two ways:
+
+1. Send an explicit command, for example `/add_tg https://t.me/example`
+2. Or simply send a supported link to the bot in a direct 1:1 chat (auto-add)
+
+**Important**: auto-add works only in direct 1:1 chats, not in groups/channels.
 
 Everything else is automatic:
 - Clones repo to `/opt/dc-atlas`

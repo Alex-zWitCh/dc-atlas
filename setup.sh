@@ -216,6 +216,19 @@ env = {
     "SUPPORT_INVITE_URL": os.environ.get("SUPPORT_INVITE_URL", ""),
     "CATALOG_AUTO_APPROVE": "true",
     "REPORTS_TO_HIDE": "5",
+    "TELEGRAM_MAX_CONSECUTIVE_ERRORS": "5",
+
+    "AVATAR_FETCH_ENABLED": "true",
+    "AVATAR_MAX_BYTES": "1048576",
+    "AVATAR_HTTP_TIMEOUT_SECONDS": "10",
+    "AVATAR_CACHE_DIR": os.environ["APP_DATA_DIR"] + "/avatars",
+    "AVATAR_REFRESH_INTERVAL_HOURS": "24",
+    "AVATAR_ALLOWED_MIME": "image/jpeg,image/png,image/webp",
+
+    "DC_PROFILE_CLEANUP_ENABLED": "true",
+    "DC_PROFILE_CLEANUP_DAYS": "7",
+    "DC_PROFILE_CLEANUP_INTERVAL_SECONDS": "3600",
+
     "DELTA_CHAT_PROFILE_PATH": os.environ["APP_DATA_DIR"] + "/deltachat-profile",
     "DC_EMAIL": os.environ["DC_EMAIL"],
     "DC_PASSWORD": os.environ["DC_PASSWORD"],
