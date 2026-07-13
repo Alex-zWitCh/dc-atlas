@@ -540,35 +540,54 @@ class CommandRouter:
         return "\nПрокси: ❌ отключён"
 
     def _cmd_admin_proxy(self, user_id: str, args: str) -> str:
-        """Show Telegram proxy status. Proxy is configured via .env."""
+        """Show or set Telegram proxy. Proxy is persisted in .env and bot restarts."""
         if not self._is_admin(user_id):
             return fmt.format_error("Нет прав администратора.")
-
         from ..config import get_config
         import re
-
-        cfg = get_config()
 
         def _mask(url: str) -> str:
             return re.sub(r"://([^:]+):([^@]+)@", r"://\1:***@", url or "")
 
-        if cfg.TELEGRAM_PROXY_ENABLED:
-            return (
-                "Прокси включён.\n"
-                f"URL: {_mask(cfg.TELEGRAM_PROXY_URL)}\n\n"
-                "Чтобы изменить прокси, отредактируйте `/opt/dc-atlas/.env` "
-                "и перезапустите сервис:\n"
-                "sudo systemctl restart dc-atlas"
-            )
+        cfg = get_config()
+        args = args.strip()
 
-        return (
-            "Прокси отключён.\n\n"
-            "Чтобы включить прокси, задайте в `/opt/dc-atlas/.env`:\n"
-            "TELEGRAM_PROXY_ENABLED=true\n"
-            "TELEGRAM_PROXY_URL=http://user:pass@host:port\n\n"
-            "Затем перезапустите сервис:\n"
-            "sudo systemctl restart dc-atlas"
-        )
+        if not args:
+            if cfg.TELEGRAM_PROXY_ENABLED:
+                return f"Прокси включён.\nURL: {_mask(cfg.TELEGRAM_PROXY_URL)}\n\n/admin_proxy off — отключить\n/admin_proxy on <url> — сменить"
+            return "Прокси отключён.\n/admin_proxy on http://user:pass@host:port — включить"
+
+        parts = args.split(maxsplit=1)
+        action = parts[0].lower()
+
+        if action == "off":
+            cfg.TELEGRAM_PROXY_ENABLED = False
+            cfg.TELEGRAM_PROXY_URL = ""
+            cfg._pending_restart = True
+            env_path = Path("/opt/dc-atlas/.env")
+            if env_path.exists():
+                text = env_path.read_text()
+                text = re.sub(r"^TELEGRAM_PROXY_ENABLED=.*$", "TELEGRAM_PROXY_ENABLED=false", text, flags=re.M)
+                text = re.sub(r"^TELEGRAM_PROXY_URL=.*$", "TELEGRAM_PROXY_URL=", text, flags=re.M)
+                env_path.write_text(text)
+            return "✅ Прокси отключён. Бот перезапускается…"
+
+        if action == "on":
+            if len(parts) < 2:
+                return "Укажите URL: /admin_proxy on http://user:pass@host:port"
+            url = parts[1]
+            cfg.TELEGRAM_PROXY_ENABLED = True
+            cfg.TELEGRAM_PROXY_URL = url
+            cfg._pending_restart = True
+            env_path = Path("/opt/dc-atlas/.env")
+            if env_path.exists():
+                text = env_path.read_text()
+                text = re.sub(r"^TELEGRAM_PROXY_ENABLED=.*$", "TELEGRAM_PROXY_ENABLED=true", text, flags=re.M)
+                text = re.sub(r"^TELEGRAM_PROXY_URL=.*$", f"TELEGRAM_PROXY_URL={url}", text, flags=re.M)
+                env_path.write_text(text)
+            return f"✅ Прокси включён: {_mask(url)}\nБот перезапускается…"
+
+        return "/admin_proxy — статус\n/admin_proxy on <url> — включить\n/admin_proxy off — отключить"
 
     def _cmd_admin_hide(self, user_id: str, args: str) -> str:
         if not self._is_admin(user_id):

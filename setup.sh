@@ -270,8 +270,8 @@ chmod 775 "$REPO_DIR"
 
 # ---------- secure .env ----------
 chown root:dc-atlas "$REPO_DIR/.env"
-chmod 640 "$REPO_DIR/.env"
-ok ".env защищён (chmod 640, владелец root:dc-atlas)"
+chmod 660 "$REPO_DIR/.env"
+ok ".env защищён (chmod 660, владелец root:dc-atlas)"
 
 # ---------- init DB ----------
 info "Инициализация базы данных…"
