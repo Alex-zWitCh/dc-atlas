@@ -87,7 +87,7 @@ Cards are created automatically — just send a supported link in a direct 1:1 c
 | `/admin_check_tg <username>` | Check mirror status |
 | `/admin_clear_reports <email>` | Clear reports from user |
 | `/admin_reports` | View reports |
-| `/admin_proxy [on <url>|off]` | Set/view Telegram proxy |
+| `/admin_proxy [on &#124; off]` | Set/view Telegram proxy |
 
 ---
 
