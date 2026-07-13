@@ -223,7 +223,6 @@ class DeltaChatAdapter:
                 except Exception as e:
                     logger.info("Could not get chat_type for chat %s: %s", snapshot.chat_id, e)
                     is_direct = True
-                    is_direct = True
             except Exception:
                 is_direct = True
             # Extract sender info
@@ -252,8 +251,6 @@ class DeltaChatAdapter:
                 logger.info("Raw event: %s chat_id=%s", kind, chat_id)
                 if chat_id:
                     self._check_new_contact(chat_id)
-        except Exception as e:
-            logger.debug("on_raw_event: %s", e)
         except Exception as e:
             logger.debug("on_raw_event: %s", e)
 
