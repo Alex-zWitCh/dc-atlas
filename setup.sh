@@ -54,6 +54,14 @@ echo ""
 prompt "Домен chatmail-сервера [nine.testrun.org]:"
 read_input CHATMAIL_DOMAIN
 CHATMAIL_DOMAIN="${CHATMAIL_DOMAIN:-nine.testrun.org}"
+# Validate domain: remove protocol prefix, strip whitespace, check format
+CHATMAIL_DOMAIN="${CHATMAIL_DOMAIN#https://}"
+CHATMAIL_DOMAIN="${CHATMAIL_DOMAIN#http://}"
+CHATMAIL_DOMAIN="${CHATMAIL_DOMAIN%%/*}"
+CHATMAIL_DOMAIN="$(echo "$CHATMAIL_DOMAIN" | xargs)"
+if ! echo "$CHATMAIL_DOMAIN" | grep -qP '^[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?)*\.[a-zA-Z]{2,}$'; then
+    err "Некорректный домен: $CHATMAIL_DOMAIN. Пример: nine.testrun.org"
+fi
 
 info "Введите ссылки-приглашения администраторов (по одной или несколько)."
 info "Скопируйте из Delta Chat: профиль → Пригласить → скопировать ссылку."
@@ -104,6 +112,11 @@ TELEGRAM_PROXY_URL=""
 if [[ "$USE_PROXY" =~ ^[YyДд] ]]; then
     prompt "URL прокси (http://user:pass@host:port):"
     read_input PROXY_URL
+    # Validate proxy URL format
+    PROXY_URL="$(echo "$PROXY_URL" | xargs)"
+    if ! echo "$PROXY_URL" | grep -qP '^https?://[^:@]+:[^@]+@[^:/]+(:\d+)?$'; then
+        err "Некорректный URL прокси. Ожидается: http://user:pass@host:port"
+    fi
     TELEGRAM_PROXY_ENABLED="true"
     TELEGRAM_PROXY_URL="${PROXY_URL}"
 fi
@@ -111,6 +124,13 @@ fi
 prompt "Ссылка на саппорт (Enter чтобы пропустить): "
 read_input SUPPORT_INVITE_URL
 SUPPORT_INVITE_URL="${SUPPORT_INVITE_URL:-}"
+if [[ -n "$SUPPORT_INVITE_URL" ]]; then
+    SUPPORT_INVITE_URL="$(echo "$SUPPORT_INVITE_URL" | xargs)"
+    # Must be a valid Delta Chat invite link or email
+    if ! echo "$SUPPORT_INVITE_URL" | grep -qP '^https://i\.delta\.chat/#|^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'; then
+        err "Ссылка на саппорт должна быть ссылкой-приглашением Delta Chat (https://i.delta.chat/#...) или email-адресом."
+    fi
+fi
 
 # ---------- create bot account ----------
 echo ""
