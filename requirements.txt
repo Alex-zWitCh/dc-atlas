@@ -1,0 +1,12 @@
+# Python 3.11+ required (not a pip package)
+requests>=2.31
+beautifulsoup4>=4.12
+python-dotenv>=1.0
+# Delta Chat integration (Stage 7+)
+deltachat-rpc-client>=1.150
+deltachat-rpc-server>=2.50
+pytest>=7
+pytest-xdist
+
+# QR code generation for /invite command
+qrcode[pil]
