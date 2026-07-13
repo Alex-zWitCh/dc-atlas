@@ -18,7 +18,7 @@
 - Open card by ID — `/open_5`
 
 ### 🔄 Telegram Mirrors
-- Create read-only mirrors of public Telegram channels (command `/add_tg`)
+- Create read-only mirrors of public Telegram channels (auto-detect by `https://t.me/...` link)
 - Automatic posting of new messages to Delta Chat Channel
 - **HTTP-proxy** support for bypassing Telegram blocks
 - Mirror management: pause, resume, check
@@ -53,10 +53,7 @@
 | Command | Description |
 |---------|-------------|
 | `/help` | Show help |
-| `/add_group <invite>` | Add Delta Chat group |
-| `/add_channel <invite>` | Add Delta Chat channel |
-| `/add_tg <url>` | Add Telegram mirror |
-| `/add_bot` | Add a bot |
+| `/invite` | QR code with bot invite |
 | `/search <query>` | Search catalog |
 | `/open_<id>` | Open card |
 | `/new` | New cards |
@@ -64,8 +61,15 @@
 | `/delete_<id>` | Delete your card |
 | `/set_contact_<id> <invite>` | Set contact link for your card |
 | `/report_<id> <reason>` | Report a card |
-| `/invite` | QR code with bot invite |
 | `/list [page]` | Paginated card list |
+
+### Auto-add by link
+
+Cards are created automatically — just send a supported link in a direct 1:1 chat:
+- `https://t.me/...` → Telegram mirror
+- `https://i.delta.chat/#...` → Delta Chat group, channel or bot
+
+**Note**: auto-add works only in direct 1:1 chats, not in groups/channels.
 
 ### Admin commands
 
@@ -82,6 +86,8 @@
 | `/admin_resume_tg <username>` | Resume mirror |
 | `/admin_check_tg <username>` | Check mirror status |
 | `/admin_clear_reports <email>` | Clear reports from user |
+| `/admin_reports` | View reports |
+| `/admin_proxy [on <url>|off]` | Set/view Telegram proxy |
 
 ---
 
@@ -176,10 +182,11 @@ systemctl restart dc-atlas
 
 ## Telegram Mirror: how it works
 
-1. User sends `/add_tg https://t.me/username`
-2. Bot parses the public Telegram HTML page
-3. Creates a Delta Chat Channel and publishes posts
+1. User sends `https://t.me/username` to the bot
+2. Bot detects the link and creates a Telegram mirror channel
+3. Opens the public Telegram page, extracts title and description
 4. New posts are checked at configurable interval (default 5 minutes)
+5. Posts are published to the Delta Chat channel
 
 ### Proxy for Telegram
 
