@@ -280,7 +280,7 @@ class CommandRouter:
                 "/add_channel https://i.delta.chat/#...\n\n"
                 "Бот вступит в канал, скопирует название, описание, аватар и теги (#хештеги).\n"
                 "Опционально можно указать контакт администратора после ссылки:\n"
-                "/add_channel https://i.delta.chat/#... | admin@example.org"
+                "/add_channel https://i.delta.chat/#... | https://i.delta.chat/#contact_link"
             )
         # Parse: invite_url | admin_contact
         parts = [p.strip() for p in args.split("|", 1)]

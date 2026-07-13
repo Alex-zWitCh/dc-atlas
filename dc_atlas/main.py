@@ -6,6 +6,7 @@ Supports --check-config, --init-db and normal runtime modes.
 """
 
 import argparse
+import os
 import sys
 from pathlib import Path
 
@@ -256,18 +257,19 @@ def _production_loop(adapter: any, router: "CommandRouter", storage) -> None:
                         if sender == get_config().DC_EMAIL:
                             continue
 
-                    # Send welcome on first message from user in 1:1 chat
+                    # Send welcome only for new-contact signal without real text.
                     if is_direct_chat and sender not in welcomed_users:
                         welcomed_users.add(sender)
-                        welcome = fmt.format_welcome()
-                        if welcome:
-                            adapter.send_message(chat_id, welcome)
-                            logger.info("Welcome sent to %s (first msg)", sender)
-                        # Don't also process this message through router — it would
-                        # send a second welcome. The user's message is the trigger.
-                        continue
 
-                    # Process all messages — router handles commands and auto-detect
+                        if is_new_contact and not text.strip():
+                            welcome = fmt.format_welcome()
+                            if welcome:
+                                adapter.send_message(chat_id, welcome)
+                                logger.info("Welcome sent to %s (new contact)", sender)
+                            continue
+
+                    # Process real messages through router.
+                    response = router.handle(
                     if is_new_contact and is_direct_chat:
                         # New contact via SecureJoin — welcome already sent above
                         pass
@@ -278,7 +280,7 @@ def _production_loop(adapter: any, router: "CommandRouter", storage) -> None:
                     # Check if admin requested a restart (e.g. proxy change)
                     if getattr(get_config(), "_pending_restart", False):
                         logger.info("Restart requested by admin, exiting...")
-                        sys.exit(0)
+                        os._exit(0)
             except (AttributeError, NotImplementedError):
                 pass
             except Exception as e:
