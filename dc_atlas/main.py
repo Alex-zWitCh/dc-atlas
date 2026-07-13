@@ -269,7 +269,6 @@ def _production_loop(adapter: any, router: "CommandRouter", storage) -> None:
                             continue
 
                     # Process real messages through router.
-                    response = router.handle(
                     if is_new_contact and is_direct_chat:
                         # New contact via SecureJoin — welcome already sent above
                         pass
