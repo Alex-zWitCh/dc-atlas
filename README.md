@@ -100,10 +100,9 @@ The script will ask:
 
 The installer extracts admin email addresses from the Delta Chat invite links automatically.
 
-You can add items in two ways:
-
-1. Send an explicit command, for example `/add_tg https://t.me/example`
-2. Or simply send a supported link to the bot in a direct 1:1 chat (auto-add)
+Supported links are auto-detected in direct 1:1 chats:
+- Telegram channel link (`https://t.me/...`) → Telegram mirror
+- Delta Chat invite link (`https://i.delta.chat/#...`) → group, channel or bot
 
 **Important**: auto-add works only in direct 1:1 chats, not in groups/channels.
 

@@ -61,7 +61,11 @@ class CommandRouter:
             self._user_chats[user_id] = chat_id
 
         if not text.startswith("/"):
-            # Try auto-detect link first
+            # Auto-detect links only in direct 1:1 chats.
+            # Never process ordinary group/channel messages.
+            if not is_direct_chat:
+                return None
+
             try:
                 result = self._auto_add_from_url(user_id, text, chat_id)
                 if result is not None:
@@ -70,12 +74,13 @@ class CommandRouter:
                 self._logger.exception("Auto-detect error: %s", e)
                 return fmt.format_error(f"Ошибка: {e}")
 
-            # Welcome only in direct 1:1 chats, never in groups/channels
-            if text and is_direct_chat:
-                self._logger.info("Sending welcome to %s in chat %s (direct=%s)", user_id, chat_id, is_direct_chat)
-                return fmt.format_welcome()
-            self._logger.info("No welcome for %s: text=%r direct=%s", user_id, text[:30] if text else "", is_direct_chat)
-            return None
+            self._logger.info(
+                "Sending welcome to %s in chat %s (direct=%s)",
+                user_id,
+                chat_id,
+                is_direct_chat,
+            )
+            return fmt.format_welcome()
 
         # Support both "/open 123" and "/open_123" syntax
         # Also "/report_5" etc.
@@ -450,41 +455,41 @@ class CommandRouter:
         if not chat_id:
             return "Не удалось определить ваш чат. Попробуйте написать любое сообщение и повторить команду."
 
+        tmp_path = None
         try:
-            # Get the invite link text from the bot's account
             invite_url = self._adapter.get_bot_invite()
 
-            # Generate QR code PNG
             import qrcode
             import tempfile
             import os
 
             qr = qrcode.make(invite_url)
             tmp = tempfile.NamedTemporaryFile(suffix=".png", delete=False)
-            qr.save(tmp.name)
+            tmp_path = tmp.name
+            qr.save(tmp_path)
             tmp.close()
 
             text = (
-                f"🤖 **DC Atlas — моя инвайт-ссылка**\n\n"
+                f"🤖 DC Atlas — моя инвайт-ссылка\n\n"
                 f"Отсканируй этот QR-код в Delta Chat, чтобы добавить меня "
                 f"в контакты и пользоваться каталогом.\n\n"
                 f"{invite_url}\n\n"
                 f"Команды: /help"
             )
 
-            self._adapter.send_message(chat_id, text, [tmp.name])
-
-            # Clean up temp file
-            try:
-                os.unlink(tmp.name)
-            except Exception:
-                pass
-
+            self._adapter.send_message(chat_id, text, [tmp_path])
             return None
 
         except Exception as e:
             self._logger.error("/invite failed: %s", e)
             return "Не удалось создать инвайт-ссылку. Попробуйте позже."
+
+        finally:
+            if tmp_path:
+                try:
+                    os.unlink(tmp_path)
+                except Exception:
+                    pass
 
     # ---- Admin commands ----
 
@@ -535,55 +540,35 @@ class CommandRouter:
         return "\nПрокси: ❌ отключён"
 
     def _cmd_admin_proxy(self, user_id: str, args: str) -> str:
-        """Show or set Telegram proxy. Auto-restarts bot on change. Usage: /admin_proxy [on <url> | off]"""
+        """Show Telegram proxy status. Proxy is configured via .env."""
         if not self._is_admin(user_id):
             return fmt.format_error("Нет прав администратора.")
+
         from ..config import get_config
-        import re, logging
+        import re
+
+        cfg = get_config()
 
         def _mask(url: str) -> str:
             return re.sub(r"://([^:]+):([^@]+)@", r"://\1:***@", url or "")
 
-        cfg = get_config()
-        args = args.strip()
+        if cfg.TELEGRAM_PROXY_ENABLED:
+            return (
+                "Прокси включён.\n"
+                f"URL: {_mask(cfg.TELEGRAM_PROXY_URL)}\n\n"
+                "Чтобы изменить прокси, отредактируйте `/opt/dc-atlas/.env` "
+                "и перезапустите сервис:\n"
+                "sudo systemctl restart dc-atlas"
+            )
 
-        if not args:
-            if cfg.TELEGRAM_PROXY_ENABLED:
-                return f"Прокси включён.\nURL: {_mask(cfg.TELEGRAM_PROXY_URL)}\n\n/admin_proxy off — отключить\n/admin_proxy on <url> — сменить"
-            return "Прокси отключён.\n/admin_proxy on http://user:pass@host:port — включить"
-
-        parts = args.split(maxsplit=1)
-        action = parts[0].lower()
-
-        if action == "off":
-            cfg.TELEGRAM_PROXY_ENABLED = False
-            cfg.TELEGRAM_PROXY_URL = ""
-            cfg._pending_restart = True
-            # Persist to .env so the next process picks it up
-            env_path = Path("/opt/dc-atlas/.env")
-            if env_path.exists():
-                text = env_path.read_text()
-                text = re.sub(r"^TELEGRAM_PROXY_ENABLED=.*$", "TELEGRAM_PROXY_ENABLED=false", text, flags=re.M)
-                text = re.sub(r"^TELEGRAM_PROXY_URL=.*$", "TELEGRAM_PROXY_URL=", text, flags=re.M)
-                env_path.write_text(text)
-            return "✅ Прокси отключён. Бот перезапускается…"
-
-        if action == "on":
-            if len(parts) < 2:
-                return "Укажите URL: /admin_proxy on http://user:pass@host:port"
-            url = parts[1]
-            cfg.TELEGRAM_PROXY_ENABLED = True
-            cfg.TELEGRAM_PROXY_URL = url
-            cfg._pending_restart = True
-            env_path = Path("/opt/dc-atlas/.env")
-            if env_path.exists():
-                text = env_path.read_text()
-                text = re.sub(r"^TELEGRAM_PROXY_ENABLED=.*$", "TELEGRAM_PROXY_ENABLED=true", text, flags=re.M)
-                text = re.sub(r"^TELEGRAM_PROXY_URL=.*$", f"TELEGRAM_PROXY_URL={url}", text, flags=re.M)
-                env_path.write_text(text)
-            return f"✅ Прокси включён: {_mask(url)}\nБот перезапускается…"
-
-        return "/admin_proxy — статус\n/admin_proxy on <url> — включить\n/admin_proxy off — отключить"
+        return (
+            "Прокси отключён.\n\n"
+            "Чтобы включить прокси, задайте в `/opt/dc-atlas/.env`:\n"
+            "TELEGRAM_PROXY_ENABLED=true\n"
+            "TELEGRAM_PROXY_URL=http://user:pass@host:port\n\n"
+            "Затем перезапустите сервис:\n"
+            "sudo systemctl restart dc-atlas"
+        )
 
     def _cmd_admin_hide(self, user_id: str, args: str) -> str:
         if not self._is_admin(user_id):
