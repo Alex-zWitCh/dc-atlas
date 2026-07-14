@@ -44,6 +44,8 @@ if [[ -d "$REPO_DIR" ]]; then
     systemctl disable dc-atlas-web 2>/dev/null || true
     info "Удаляем старую установку…"
     rm -rf "$REPO_DIR"
+    # Clean old data (DB, avatars, logs, profile) — user will get a fresh account
+    rm -rf /var/lib/dc-atlas /var/log/dc-atlas
     info "Клонирование репозитория…"
     git clone https://github.com/Alex-zWitCh/dc-atlas.git "$REPO_DIR"
     cd "$REPO_DIR"
@@ -356,7 +358,7 @@ ok "systemd сервис запущен"
 # ---------- setup systemd for web server ----------
 if [[ -n "$CATALOG_WEB_PORT" ]]; then
     info "Настройка systemd для веб-сервера каталога…"
-    cat > /etc/systemd/system/dc-atlas-web.service << 'SERVICE'
+    cat > /etc/systemd/system/dc-atlas-web.service << SERVICE
 [Unit]
 Description=DC Atlas Catalog Web Server
 After=network.target
@@ -366,10 +368,10 @@ Type=simple
 User=dc-atlas
 WorkingDirectory=/opt/dc-atlas
 EnvironmentFile=/opt/dc-atlas/.env
-ExecStart=/opt/dc-atlas/venv/bin/python /opt/dc-atlas/web/catalog_server.py \
-    --port ${CATALOG_WEB_PORT} \
-    --bind ${CATALOG_WEB_BIND} \
-    --db /var/lib/dc-atlas/dc_atlas.sqlite3 \
+ExecStart=/opt/dc-atlas/venv/bin/python /opt/dc-atlas/web/catalog_server.py \\
+    --port ${CATALOG_WEB_PORT} \\
+    --bind ${CATALOG_WEB_BIND} \\
+    --db /var/lib/dc-atlas/dc_atlas.sqlite3 \\
     --avatars /var/lib/dc-atlas/avatars
 Restart=always
 RestartSec=5
@@ -422,7 +424,12 @@ echo "  Рестарт:systemctl restart dc-atlas"
 echo ""
 if [[ -n "$CATALOG_WEB_PORT" ]]; then
     if [[ "$CATALOG_WEB_BIND" == "0.0.0.0" ]]; then
-        CATALOG_URL="http://$(curl -s ifconfig.me 2>/dev/null || echo '<IP>):$CATALOG_WEB_PORT"
+        EXTERNAL_IP=$(curl -s ifconfig.me 2>/dev/null || echo "")
+        if [[ -n "$EXTERNAL_IP" ]]; then
+            CATALOG_URL="http://$EXTERNAL_IP:$CATALOG_WEB_PORT"
+        else
+            CATALOG_URL="http://<IP>:$CATALOG_WEB_PORT"
+        fi
     else
         CATALOG_URL="http://127.0.0.1:$CATALOG_WEB_PORT"
     fi
