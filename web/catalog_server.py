@@ -82,8 +82,8 @@ def generate_qr_svg(data: str) -> str:
         import io
         qr = qrcode.QRCode(
             version=1,
-            box_size=6,
-            border=1,
+            box_size=10,
+            border=2,
             error_correction=qrcode.constants.ERROR_CORRECT_H,
         )
         qr.add_data(data)
