@@ -39,7 +39,7 @@ class Config:
         )
 
         self.TELEGRAM_PUBLIC_BASE_URL = os.getenv(
-            "TELEGRAM_PUBLIC_BASE_URL", "https://t.me/s"
+            "TELEGRAM_PUBLIC_BASE_URL", "https://telegram.me/s"
         )
         self.TELEGRAM_MAX_PHOTOS_PER_POST = int(
             os.getenv("TELEGRAM_MAX_PHOTOS_PER_POST", "3")

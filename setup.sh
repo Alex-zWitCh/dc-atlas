@@ -247,7 +247,7 @@ env = {
     "POLL_INTERVAL_SECONDS": "300",
     "POLL_MAX_SOURCES_PER_CYCLE": "100",
     "POLL_HTTP_TIMEOUT_SECONDS": "15",
-    "TELEGRAM_PUBLIC_BASE_URL": "https://t.me/s",
+    "TELEGRAM_PUBLIC_BASE_URL": "https://telegram.me/s",
     "TELEGRAM_MAX_PHOTOS_PER_POST": "3",
     "TELEGRAM_FETCH_MEDIA": "false",
     "TELEGRAM_TEMP_MEDIA_DIR": "/tmp/dc-atlas-media",
