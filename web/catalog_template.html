@@ -151,12 +151,51 @@
   .source { color: #484f58; }
   small { color: #8b949e; }
   .empty { text-align: center; padding: 60px; color: #484f58; }
+
+  /* QR invite block */
+  .qr-block {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin-bottom: 24px;
+  }
+  .qr-block img {
+    width: 120px;
+    height: 120px;
+    border-radius: 4px;
+    flex-shrink: 0;
+  }
+  .qr-block .qr-text {
+    flex: 1;
+  }
+  .qr-block .qr-text strong {
+    display: block;
+    font-size: 15px;
+    color: #f0f6fc;
+    margin-bottom: 6px;
+  }
+  .qr-block .qr-text a {
+    color: #58a6ff;
+    word-break: break-all;
+    font-size: 13px;
+  }
+  .qr-block .qr-text .qr-hint {
+    color: #8b949e;
+    font-size: 12px;
+    margin-top: 4px;
+  }
 </style>
 </head>
 <body>
 <div class="container">
   <h1>📋 DC Atlas — Каталог</h1>
   <p class="subtitle">Всего карточек: {{COUNT}}</p>
+
+  {{BOT_QR}}
 
   {{NAV}}
 

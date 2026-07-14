@@ -6,6 +6,7 @@ Usage:
   python3 web.py --port 8080      # custom port
   python3 web.py --db /path/to/dc_atlas.sqlite3
   python3 web.py --avatars /var/lib/dc-atlas/avatars
+  python3 web.py --invite 'https://i.delta.chat/#...'  # bot invite for QR
 """
 
 import argparse
@@ -70,8 +71,33 @@ def load_template() -> str:
     return """<!DOCTYPE html>
 <html lang="ru">
 <head><meta charset="UTF-8"><title>DC Atlas — Каталог</title></head>
-<body><h1>📋 DC Atlas</h1><p>Всего карточек: {{COUNT}}</p>{{NAV}}{{SECTIONS}}</body>
+<body><h1>📋 DC Atlas</h1><p>Всего карточек: {{COUNT}}</p>{{BOT_QR}}{{NAV}}{{SECTIONS}}</body>
 </html>"""
+
+
+def generate_qr_svg(data: str) -> str:
+    """Generate an inline QR code SVG for the given data string."""
+    try:
+        import qrcode
+        import io
+        qr = qrcode.QRCode(
+            version=2,
+            box_size=6,
+            border=2,
+            error_correction=qrcode.constants.ERROR_CORRECT_M,
+        )
+        qr.add_data(data)
+        qr.make(fit=True)
+        img = qr.make_image(fill_color="white", back_color="transparent")
+        buf = io.BytesIO()
+        img.save(buf, format="PNG")
+        import base64
+        b64 = base64.b64encode(buf.getvalue()).decode()
+        return f'data:image/png;base64,{b64}'
+    except ImportError:
+        return ""
+    except Exception:
+        return ""
 
 
 def get_items(db_path: str) -> list[dict]:
@@ -171,7 +197,8 @@ def _group_items(items: list[dict]) -> list[tuple[str, str, str, list[dict]]]:
     return result
 
 
-def build_page(items: list[dict], avatar_base: str, template: str) -> str:
+def build_page(items: list[dict], avatar_base: str, template: str,
+               invite_url: str = "", qr_svg: str = "") -> str:
     """Fill the HTML template with sorted sections and navigation."""
     grouped = _group_items(items)
 
@@ -203,8 +230,21 @@ def build_page(items: list[dict], avatar_base: str, template: str) -> str:
     </table>
   </div>"""
 
+    # Build QR invite block HTML
+    qr_block = ""
+    if invite_url and qr_svg:
+        qr_block = f"""<div class="qr-block">
+    <img src="{qr_svg}" alt="QR-код приглашения бота">
+    <div class="qr-text">
+      <strong>🤖 Подключиться к боту</strong>
+      <a href="{html.escape(invite_url)}">{html.escape(invite_url)}</a>
+      <div class="qr-hint">Отсканируйте QR-код или откройте ссылку в Delta Chat</div>
+    </div>
+  </div>"""
+
     return (template
             .replace("{{COUNT}}", str(len(items)))
+            .replace("{{BOT_QR}}", qr_block)
             .replace("{{NAV}}", nav_links)
             .replace("{{SECTIONS}}", sections_html))
 
@@ -215,6 +255,8 @@ class CatalogHandler(BaseHTTPRequestHandler):
     db_path = ""
     avatar_base = ""
     template = ""
+    invite_url = ""
+    qr_svg = ""
 
     def do_GET(self):
         parsed = urlparse(self.path)
@@ -253,7 +295,8 @@ class CatalogHandler(BaseHTTPRequestHandler):
 
         # HTML page
         items = get_items(self.db_path)
-        page = build_page(items, self.avatar_base, self.template)
+        page = build_page(items, self.avatar_base, self.template,
+                          self.invite_url, self.qr_svg)
         self.send_response(200)
         self.send_header("Content-Type", "text/html; charset=utf-8")
         self.end_headers()
@@ -269,6 +312,7 @@ def main():
     parser.add_argument("--db", default="", help="Path to dc_atlas.sqlite3")
     parser.add_argument("--avatars", default="", help="Path to avatars directory")
     parser.add_argument("--bind", default="0.0.0.0", help="Bind address (default: 0.0.0.0)")
+    parser.add_argument("--invite", default="", help="Bot invite URL for QR code")
     args = parser.parse_args()
 
     # Find database
@@ -296,6 +340,8 @@ def main():
     CatalogHandler.db_path = db_path
     CatalogHandler.avatar_base = avatar_base
     CatalogHandler.template = load_template()
+    CatalogHandler.invite_url = args.invite
+    CatalogHandler.qr_svg = generate_qr_svg(args.invite) if args.invite else ""
 
     server = HTTPServer((args.bind, args.port), CatalogHandler)
     print(f"Serving catalog at http://{args.bind}:{args.port}")
