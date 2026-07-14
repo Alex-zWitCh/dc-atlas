@@ -76,19 +76,19 @@ def load_template() -> str:
 
 
 def generate_qr_svg(data: str) -> str:
-    """Generate an inline QR code SVG for the given data string."""
+    """Generate an inline QR code PNG as base64 data URI."""
     try:
         import qrcode
         import io
         qr = qrcode.QRCode(
-            version=2,
+            version=1,
             box_size=6,
-            border=2,
-            error_correction=qrcode.constants.ERROR_CORRECT_M,
+            border=1,
+            error_correction=qrcode.constants.ERROR_CORRECT_H,
         )
         qr.add_data(data)
         qr.make(fit=True)
-        img = qr.make_image(fill_color="white", back_color="transparent")
+        img = qr.make_image(fill_color="black", back_color="white")
         buf = io.BytesIO()
         img.save(buf, format="PNG")
         import base64
