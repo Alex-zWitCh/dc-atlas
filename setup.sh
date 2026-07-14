@@ -401,6 +401,15 @@ if [[ -z "$BOT_INVITE" && -f "$INVITE_FILE" ]]; then
 fi
 info "Инвайт: ${BOT_INVITE:-не получен}"
 
+# ---------- add invite to web server ----------
+if [[ -n "$BOT_INVITE" && -n "$CATALOG_WEB_PORT" ]]; then
+    # Escape for .env: double-quote to protect special chars (&, #, %)
+    sed -i '/^BOT_INVITE=/d' "$REPO_DIR/.env" 2>/dev/null || true
+    echo "BOT_INVITE=\"$BOT_INVITE\"" >> "$REPO_DIR/.env"
+    systemctl restart dc-atlas-web 2>/dev/null || true
+    ok "BOT_INVITE добавлен в .env, веб-сервер перезапущен"
+fi
+
 # ---------- done ----------
 echo ""
 info "============================================"
