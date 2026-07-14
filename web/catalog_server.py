@@ -340,8 +340,9 @@ def main():
     CatalogHandler.db_path = db_path
     CatalogHandler.avatar_base = avatar_base
     CatalogHandler.template = load_template()
-    CatalogHandler.invite_url = args.invite
-    CatalogHandler.qr_svg = generate_qr_svg(args.invite) if args.invite else ""
+    invite_url = args.invite or os.environ.get("BOT_INVITE", "")
+    CatalogHandler.invite_url = invite_url
+    CatalogHandler.qr_svg = generate_qr_svg(invite_url) if invite_url else ""
 
     server = HTTPServer((args.bind, args.port), CatalogHandler)
     print(f"Serving catalog at http://{args.bind}:{args.port}")
