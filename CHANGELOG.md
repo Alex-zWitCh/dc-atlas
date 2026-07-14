@@ -1,5 +1,35 @@
 # Changelog
 
+## Release 1.1.0 — 2026-07-14
+
+### Web catalog server
+- New `web/catalog_server.py` — simple HTTP server to browse catalog in browser
+- HTML template (`web/catalog_template.html`) — can be edited independently
+- Navigation by card type groups, dark theme (GitHub Dark-style)
+- JSON endpoint `/catalog.json` for API access
+- Avatar serving from cache directory
+- setup.sh: optional web server setup (port prompt, bind address with security warning)
+- systemd service `dc-atlas-web` created automatically when port is specified
+- Catalog URL displayed at end of installation
+
+### Proxy & Telegram access fixes
+- Changed default `TELEGRAM_PUBLIC_BASE_URL` from `https://t.me/s` to `https://telegram.me/s`
+  (`t.me` is SNI-blocked by some providers, `telegram.me` works)
+- All hardcoded `t.me` URLs replaced with config-based URLs in:
+  - `telegram_mirror_service.py` — verification fetch
+  - `avatar.py` — avatar URL extraction
+  - `public_parser.py` — post original URLs
+- `normalize.py` — now strips both `t.me/` and `telegram.me/` prefixes
+- `router.py` — regex accepts both `t.me` and `telegram.me` links
+- Proxy port updated to 1081 in setup prompt
+
+### Setup improvements
+- Reinstall prompt: when `/opt/dc-atlas` exists, asks to delete and reinstall (default: yes)
+- Old data (`/var/lib/dc-atlas`) is cleaned on reinstall
+- Web server configuration block with port and bind address prompts
+- Fixed unterminated single quote bug in CATALOG_URL generation
+- Fixed systemd service heredoc to expand port/bind values
+
 ## Release 1.0.0 — 2026-07-13
 
 First public release of DC Atlas — a Delta Chat catalog bot.

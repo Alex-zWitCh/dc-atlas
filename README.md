@@ -66,7 +66,7 @@
 ### Auto-add by link
 
 Cards are created automatically — just send a supported link in a direct 1:1 chat:
-- `https://t.me/...` → Telegram mirror
+- `https://t.me/...` or `https://telegram.me/...` → Telegram mirror
 - `https://i.delta.chat/#...` → Delta Chat group, channel or bot
 
 **Note**: auto-add works only in direct 1:1 chats, not in groups/channels.
@@ -101,8 +101,13 @@ The script will ask:
 
 1. **Chatmail server domain** (default: `nine.testrun.org`) — bot account is created automatically via `/new`
 2. **Administrator Delta Chat invite links** — paste one or more invite links from Delta Chat
-3. **HTTP proxy for Telegram** (optional)
+3. **HTTP proxy for Telegram** (optional) — to bypass blocking
 4. **Support contact link or email** (optional)
+5. **Web server port for catalog** (optional, default `9199`) — if set, creates a simple HTTP page to browse catalog
+   - Prompts for bind address: `127.0.0.1` (local only, recommended) or `0.0.0.0` (all interfaces — **not secure**)
+   - Creates `dc-atlas-web` systemd service alongside the bot
+
+If `/opt/dc-atlas` already exists, the script will ask to delete and reinstall (default: yes).
 
 The installer extracts admin email addresses from the Delta Chat invite links automatically.
 
@@ -125,6 +130,27 @@ After installation the bot is already running:
 ```bash
 systemctl status dc-atlas
 journalctl -u dc-atlas -f
+```
+
+### Web catalog server (optional)
+
+If a web server port was specified during setup, a second service is also running:
+
+```bash
+systemctl status dc-atlas-web
+journalctl -u dc-atlas-web -f
+```
+
+The catalog page is available at the configured address. To edit the page appearance, modify the template:
+
+```bash
+nano /opt/dc-atlas/web/catalog_template.html
+```
+
+Then restart the web server:
+
+```bash
+systemctl restart dc-atlas-web
 ```
 
 ### Requirements
