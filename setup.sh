@@ -28,13 +28,27 @@ fi
 
 # ---------- repo path ----------
 REPO_DIR="/opt/dc-atlas"
-if [[ -d "$REPO_DIR/.git" ]]; then
-    info "Репозиторий уже существует в $REPO_DIR, обновляем…"
+if [[ -d "$REPO_DIR" ]]; then
+    echo ""
+    warn "Обнаружена существующая установка DC Atlas в $REPO_DIR"
+    echo ""
+    prompt "Удалить всё и установить заново? (Y/n): "
+    read_input REINSTALL
+    if [[ "$REINSTALL" =~ ^[Nn] ]]; then
+        err "Установка отменена пользователем."
+    fi
+    info "Останавливаем сервисы…"
+    systemctl stop dc-atlas 2>/dev/null || true
+    systemctl stop dc-atlas-web 2>/dev/null || true
+    systemctl disable dc-atlas 2>/dev/null || true
+    systemctl disable dc-atlas-web 2>/dev/null || true
+    info "Удаляем старую установку…"
+    rm -rf "$REPO_DIR"
+    info "Клонирование репозитория…"
+    git clone https://github.com/Alex-zWitCh/dc-atlas.git "$REPO_DIR"
     cd "$REPO_DIR"
-    git pull --ff-only
 else
     info "Клонирование репозитория…"
-    rm -rf "$REPO_DIR"
     git clone https://github.com/Alex-zWitCh/dc-atlas.git "$REPO_DIR"
     cd "$REPO_DIR"
 fi
@@ -132,6 +146,33 @@ if [[ -n "$SUPPORT_INVITE_URL" ]]; then
     fi
 fi
 
+# ---------- web server (catalog) ----------
+CATALOG_WEB_PORT=""
+CATALOG_WEB_BIND="127.0.0.1"
+echo ""
+info "===== Веб-сервер каталога ====="
+info "Простой HTTP-сервер для просмотра каталога карточек в браузере."
+prompt "Порт веб-сервера (оставьте пустым чтобы отключить) [9199]:"
+read_input WEB_PORT_INPUT
+WEB_PORT_INPUT="${WEB_PORT_INPUT:-}"
+if [[ -n "$WEB_PORT_INPUT" ]]; then
+    CATALOG_WEB_PORT="$WEB_PORT_INPUT"
+    echo ""
+    warn "ВНИМАНИЕ: Сервер не имеет аутентификации!"
+    prompt "Слушать на всех интерфейсах (0.0.0.0) — НЕБЕЗОПАСНО? (y/N): "
+    read_input WEB_ALL
+    if [[ "$WEB_ALL" =~ ^[YyДд] ]]; then
+        CATALOG_WEB_BIND="0.0.0.0"
+        warn "Выбран 0.0.0.0 — любой в интернете сможет открыть страницу!"
+    else
+        CATALOG_WEB_BIND="127.0.0.1"
+        info "Выбран 127.0.0.1 — только локальный доступ (рекомендуется)."
+    fi
+else
+    # Default to empty — server disabled
+    CATALOG_WEB_PORT=""
+fi
+
 # ---------- create bot account ----------
 echo ""
 info "Создание аккаунта на $CHATMAIL_DOMAIN…"
@@ -177,6 +218,7 @@ fi
 # cannot handle that safely.
 export APP_DATA_DIR TELEGRAM_PROXY_ENABLED TELEGRAM_PROXY_URL SUPPORT_INVITE_URL
 export DC_EMAIL DC_PASSWORD CHATMAIL_DOMAIN REPO_DIR
+export CATALOG_WEB_PORT CATALOG_WEB_BIND
 # Convert newline-separated admin emails to comma-separated for .env
 ADMIN_CSV=$(echo "$ADMIN_EMAILS" | tr '\n' ',')
 export ADMIN_EMAILS="$ADMIN_CSV"
@@ -235,6 +277,8 @@ env = {
     "DC_IMAP_SERVER": os.environ["CHATMAIL_DOMAIN"],
     "DC_SMTP_SERVER": os.environ["CHATMAIL_DOMAIN"],
     "BOT_ADMIN_EMAILS": os.environ["ADMIN_EMAILS"],
+    "CATALOG_WEB_PORT": os.environ.get("CATALOG_WEB_PORT", ""),
+    "CATALOG_WEB_BIND": os.environ.get("CATALOG_WEB_BIND", "127.0.0.1"),
 }
 
 with open(os.path.join(os.environ["REPO_DIR"], ".env"), "w") as f:
@@ -309,6 +353,35 @@ systemctl daemon-reload
 systemctl enable --now dc-atlas
 ok "systemd сервис запущен"
 
+# ---------- setup systemd for web server ----------
+if [[ -n "$CATALOG_WEB_PORT" ]]; then
+    info "Настройка systemd для веб-сервера каталога…"
+    cat > /etc/systemd/system/dc-atlas-web.service << 'SERVICE'
+[Unit]
+Description=DC Atlas Catalog Web Server
+After=network.target
+
+[Service]
+Type=simple
+User=dc-atlas
+WorkingDirectory=/opt/dc-atlas
+EnvironmentFile=/opt/dc-atlas/.env
+ExecStart=/opt/dc-atlas/venv/bin/python /opt/dc-atlas/web/catalog_server.py \
+    --port ${CATALOG_WEB_PORT} \
+    --bind ${CATALOG_WEB_BIND} \
+    --db /var/lib/dc-atlas/dc_atlas.sqlite3 \
+    --avatars /var/lib/dc-atlas/avatars
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+SERVICE
+    systemctl daemon-reload
+    systemctl enable --now dc-atlas-web
+    ok "systemd сервис веб-сервера запущен (порт $CATALOG_WEB_PORT, bind $CATALOG_WEB_BIND)"
+fi
+
 # ---------- get bot invite from file ----------
 info "Ожидание инвайт-ссылки бота…"
 BOT_INVITE=""
@@ -347,3 +420,16 @@ echo "  Логи:   journalctl -u dc-atlas -f"
 echo "  Стоп:   systemctl stop dc-atlas"
 echo "  Рестарт:systemctl restart dc-atlas"
 echo ""
+if [[ -n "$CATALOG_WEB_PORT" ]]; then
+    if [[ "$CATALOG_WEB_BIND" == "0.0.0.0" ]]; then
+        CATALOG_URL="http://$(curl -s ifconfig.me 2>/dev/null || echo '<IP>):$CATALOG_WEB_PORT"
+    else
+        CATALOG_URL="http://127.0.0.1:$CATALOG_WEB_PORT"
+    fi
+    echo "  🌐 Веб-сервер каталога:"
+    echo "  URL:  $CATALOG_URL"
+    echo "  Статус: systemctl status dc-atlas-web"
+    echo "  Логи:   journalctl -u dc-atlas-web -f"
+    echo "  Шаблон для редактирования: $REPO_DIR/web/catalog_template.html"
+    echo ""
+fi
