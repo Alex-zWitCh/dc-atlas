@@ -92,7 +92,9 @@ class TelegramMirrorService:
                 pu = cfg.TELEGRAM_PROXY_URL
                 session.trust_env = False
                 session.proxies.update({"http": pu, "https": pu})
-            resp = session.get(f"https://t.me/{username}", timeout=10)
+            base = cfg.TELEGRAM_PUBLIC_BASE_URL.rstrip('/').removesuffix('/s')
+            verify_url = f"{base}/{username}"
+            resp = session.get(verify_url, timeout=10)
             if resp.status_code == 200:
                 html = resp.text
                 m = re.search(r'<meta\s+property="og:title"\s+content="([^"]+)"', html)

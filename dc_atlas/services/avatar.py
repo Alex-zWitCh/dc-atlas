@@ -57,7 +57,10 @@ class AvatarService:
 
     def _extract_avatar_url(self, username: str) -> Optional[str]:
         """Extract avatar URL from Telegram channel page."""
-        url = f"https://t.me/{username}"
+        from ..config import get_config
+        cfg = get_config()
+        base = cfg.TELEGRAM_PUBLIC_BASE_URL.rstrip('/').removesuffix('/s')
+        url = f"{base}/{username}"
         try:
             resp = self._session.get(url, timeout=self._timeout)
             resp.raise_for_status()

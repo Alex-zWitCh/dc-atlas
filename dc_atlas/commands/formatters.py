@@ -193,7 +193,7 @@ def format_help(is_admin: bool = False) -> str:
 
 💡 Карточки добавляются автоматически — просто отправьте ссылку:
   • Ссылка-приглашение Delta Chat (группа, канал или бот)
-  • Ссылка на Telegram-канал (t.me/...)
+  • Ссылка на Telegram-канал (t.me/... или telegram.me/...)
 """
     if is_admin:
         text += """

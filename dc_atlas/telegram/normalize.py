@@ -25,7 +25,7 @@ def normalize_telegram_source(raw: str) -> str:
 
     # Remove protocol and domain
     text = re.sub(r"^https?://", "", text)
-    text = re.sub(r"^t\.me/", "", text)
+    text = re.sub(r"^(?:t\.me|telegram\.me)/", "", text)
     text = re.sub(r"^www\.", "", text)
 
     # Remove leading @

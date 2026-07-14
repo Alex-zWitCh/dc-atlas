@@ -162,7 +162,7 @@ class CommandRouter:
 
         # 1. Telegram links → telegram_mirror
         tg_match = re.match(
-            r"^(?:https?://)?(?:www\.)?t\.me/([a-zA-Z0-9_]+)",
+            r"^(?:https?://)?(?:www\.)?(?:t\.me|telegram\.me)/([a-zA-Z0-9_]+)",
             url,
             re.IGNORECASE,
         )
@@ -323,7 +323,7 @@ class CommandRouter:
         if blocked:
             return blocked
         if not args:
-            return "Укажите ссылку на Telegram-канал:\n/add_tg https://t.me/example"
+            return "Укажите ссылку на Telegram-канал:\n/add_tg https://t.me/example\nИли просто отправьте ссылку вида t.me/канал"
         import logging
         logger = logging.getLogger(__name__)
         try:

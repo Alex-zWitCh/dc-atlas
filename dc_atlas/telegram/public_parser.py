@@ -231,7 +231,9 @@ class TelegramPublicParser:
             message_div.find("a", class_="tgme_widget_message_document")
         )
 
-        original_url = f"https://t.me/{data_post}"
+        from ..config import get_config
+        base = get_config().TELEGRAM_PUBLIC_BASE_URL.rstrip('/').removesuffix('/s')
+        original_url = f"{base}/{data_post}"
 
         return TelegramPost(
             post_id=post_id,
