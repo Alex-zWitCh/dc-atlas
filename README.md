@@ -190,6 +190,8 @@ systemctl restart dc-atlas
 | `POLL_INTERVAL_SECONDS` | `300` | Telegram poll interval |
 | `POLL_MAX_SOURCES_PER_CYCLE` | `100` | Max sources per cycle |
 | `POLL_HTTP_TIMEOUT_SECONDS` | `15` | HTTP request timeout |
+| `TELEGRAM_FETCH_MEDIA` | `true` | Fetch photos (up to 3 per post) |
+| `TELEGRAM_STORE_MEDIA_BINARY` | `true` | Download video and other files |
 | `TELEGRAM_POST_RETENTION_DAYS` | `30` | Keep posts N days |
 | `TELEGRAM_POST_RETENTION_MAX_PER_SOURCE` | `500` | Max posts per source |
 
@@ -246,7 +248,7 @@ Telegram may be blocked in some regions. To bypass:
 - Telegram parsing is based on the public HTML page `t.me/s/<channel>`.
 - If Telegram changes its HTML layout, the parser may require an update.
 - Videos, documents and archives are not downloaded or forwarded.
-- Photos are not forwarded by default when `TELEGRAM_FETCH_MEDIA=false`.
+- Photos, videos and files are forwarded by default (`TELEGRAM_FETCH_MEDIA=true`, `TELEGRAM_STORE_MEDIA_BINARY=true`).
 - Delta Chat groups listed in the catalog are ordinary groups: all members may write there.
 - Read-only behavior is available only for Delta Chat Channels.
 

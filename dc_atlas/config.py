@@ -45,7 +45,7 @@ class Config:
             os.getenv("TELEGRAM_MAX_PHOTOS_PER_POST", "3")
         )
         self.TELEGRAM_FETCH_MEDIA = (
-            os.getenv("TELEGRAM_FETCH_MEDIA", "false").lower() == "true"
+            os.getenv("TELEGRAM_FETCH_MEDIA", "true").lower() == "true"
         )
         # Optional HTTP proxy for Telegram (bypass Russia block)
         self.TELEGRAM_PROXY_ENABLED = (
@@ -66,7 +66,7 @@ class Config:
             os.getenv("TELEGRAM_MAX_CONSECUTIVE_ERRORS", "5")
         )
         self.TELEGRAM_STORE_MEDIA_BINARY = (
-            os.getenv("TELEGRAM_STORE_MEDIA_BINARY", "false").lower() == "true"
+            os.getenv("TELEGRAM_STORE_MEDIA_BINARY", "true").lower() == "true"
         )
         self.TELEGRAM_STORE_FULL_TEXT = (
             os.getenv("TELEGRAM_STORE_FULL_TEXT", "true").lower() == "true"

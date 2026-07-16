@@ -239,6 +239,8 @@ systemctl restart dc-atlas
 | `POLL_INTERVAL_SECONDS` | `300` | Интервал проверки Telegram-каналов |
 | `POLL_MAX_SOURCES_PER_CYCLE` | `100` | Максимум источников за цикл |
 | `POLL_HTTP_TIMEOUT_SECONDS` | `15` | Таймаут HTTP-запроса к Telegram |
+| `TELEGRAM_FETCH_MEDIA` | `true` | Скачивать фото (до 3 на пост) |
+| `TELEGRAM_STORE_MEDIA_BINARY` | `true` | Скачивать видео и другие файлы |
 | `TELEGRAM_POST_RETENTION_DAYS` | `30` | Хранить посты не более N дней |
 | `TELEGRAM_POST_RETENTION_MAX_PER_SOURCE` | `500` | Не больше N постов на источник |
 
@@ -296,7 +298,7 @@ Telegram может быть заблокирован в некоторых ре
 - Парсинг Telegram основан на публичной HTML-странице `t.me/s/<channel>`.
 - Если Telegram изменит HTML-разметку, парсер может потребовать обновления.
 - Видео, документы и архивы не скачиваются и не пересылаются.
-- Фото по умолчанию не пересылаются, если `TELEGRAM_FETCH_MEDIA=false`.
+- Фото, видео и файлы пересылаются по умолчанию (`TELEGRAM_FETCH_MEDIA=true`, `TELEGRAM_STORE_MEDIA_BINARY=true`).
 - Delta Chat-группы в каталоге являются обычными группами: все участники могут писать.
 - Read-only формат доступен только для Delta Chat Channels.
 

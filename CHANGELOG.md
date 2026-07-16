@@ -1,5 +1,15 @@
 # Changelog
 
+## Release 1.2.0 — 2026-07-16
+
+### Features
+
+- **Media forwarding enabled by default** — `TELEGRAM_FETCH_MEDIA=true` and `TELEGRAM_STORE_MEDIA_BINARY=true`
+  are now the defaults. Photos (up to 3 per post), videos and files are automatically downloaded
+  and attached to Delta Chat Channel messages. Set to `false` in `.env` to disable.
+- Updated `config.py`, `setup.sh`, `README.md`/`README.ru.md` docs accordingly.
+- Removed outdated limitations about media not being forwarded.
+
 ## Release 1.1.0 — 2026-07-14
 
 ### Web catalog server
